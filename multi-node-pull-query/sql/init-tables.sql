@@ -1,0 +1,18 @@
+CREATE STREAM MIGRATION_STATUS_EVENTS (
+    version INT,
+    status VARCHAR
+) WITH (
+    KAFKA_TOPIC = 'MIGRATION_STATUS_EVENTS',
+    PARTITIONS = 1,
+    REPLICAS = 1,
+    FORMAT = 'JSON'
+);
+
+CREATE TABLE MIGRATION_STATUS 
+    WITH (
+        FORMAT = 'JSON'
+    ) AS SELECT
+        status,
+        LATEST_BY_OFFSET(version) as version
+    FROM MIGRATION_STATUS_EVENTS
+    GROUP BY status;

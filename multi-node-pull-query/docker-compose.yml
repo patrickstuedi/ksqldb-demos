@@ -1,0 +1,75 @@
+services:
+  ksql-1:
+    image: confluentinc/ksqldb-server:0.19.0
+    ports:
+      - "8088:8088"
+    depends_on:
+      - kafka
+    volumes:
+      - ./sql:/home/appuser/sql
+    environment:
+      KSQL_BOOTSTRAP_SERVERS: kafka:9092
+      KSQL_KSQL_SERVICE_ID: ksql-local_
+      KSQL_KSQL_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      KSQL_KSQL_PERSISTENCE_DEFAULT_FORMAT_KEY: AVRO
+      KSQL_KSQL_PERSISTENCE_DEFAULT_FORMAT_VALUE: AVRO
+      KSQL_CONFLUENT_SUPPORT_METRICS_ENABLE: 'false'
+      KSQL_KSQL_HEARTBEAT_ENABLE: 'true'
+
+  ## For testing clustering
+  ksql-2:
+    image: confluentinc/ksqldb-server:0.19.0
+    ports:
+      - "8089:8088"
+    depends_on:
+      - kafka
+    volumes:
+      - ./sql:/home/appuser/sql
+    environment:
+      KSQL_BOOTSTRAP_SERVERS: kafka:9092
+      KSQL_KSQL_SERVICE_ID: ksql-local_
+      KSQL_KSQL_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      KSQL_KSQL_PERSISTENCE_DEFAULT_FORMAT_KEY: AVRO
+      KSQL_KSQL_PERSISTENCE_DEFAULT_FORMAT_VALUE: AVRO
+      KSQL_CONFLUENT_SUPPORT_METRICS_ENABLE: 'false'
+      KSQL_KSQL_HEARTBEAT_ENABLE: 'true'
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:6.2.0
+    hostname: schema-registry
+    container_name: schema-registry
+    depends_on:
+      - kafka
+    ports:
+      - "8081:8081"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'kafka:9092'
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:6.2.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 32181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-enterprise-kafka:6.2.0
+    ports:
+      - "29092:29092"
+    depends_on:
+      - zookeeper
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics --list --zookeeper zookeeper:32181"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:32181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 100

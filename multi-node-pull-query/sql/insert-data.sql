@@ -1,0 +1,2 @@
+INSERT INTO MIGRATION_STATUS_EVENTS(version, status)
+VALUES (1, 'success');
