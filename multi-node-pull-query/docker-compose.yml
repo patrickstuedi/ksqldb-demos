@@ -1,3 +1,6 @@
+---
+version: '2'
+
 services:
   ksql-1:
     image: confluentinc/ksqldb-server:0.19.0
@@ -15,12 +18,16 @@ services:
       KSQL_KSQL_PERSISTENCE_DEFAULT_FORMAT_VALUE: AVRO
       KSQL_CONFLUENT_SUPPORT_METRICS_ENABLE: 'false'
       KSQL_KSQL_HEARTBEAT_ENABLE: 'true'
+      KSQL_KSQL_QUERY_PULL_ENABLE_STANDBY_READS: "true"
+      KSQL_KSQL_LAG_REPORTING_ENABLE: "true"
+      KSQL_KSQL_STREAMS_NUM_STANDBY_REPLICAS: 1
+
 
   ## For testing clustering
   ksql-2:
     image: confluentinc/ksqldb-server:0.19.0
     ports:
-      - "8089:8088"
+      - "8089:8089"
     depends_on:
       - kafka
     volumes:
@@ -33,6 +40,9 @@ services:
       KSQL_KSQL_PERSISTENCE_DEFAULT_FORMAT_VALUE: AVRO
       KSQL_CONFLUENT_SUPPORT_METRICS_ENABLE: 'false'
       KSQL_KSQL_HEARTBEAT_ENABLE: 'true'
+      KSQL_KSQL_QUERY_PULL_ENABLE_STANDBY_READS: "true"
+      KSQL_KSQL_LAG_REPORTING_ENABLE: "true"
+      KSQL_KSQL_STREAMS_NUM_STANDBY_REPLICAS: 1
 
   schema-registry:
     image: confluentinc/cp-schema-registry:6.2.0
@@ -58,11 +68,6 @@ services:
       - "29092:29092"
     depends_on:
       - zookeeper
-    healthcheck:
-      test: ["CMD-SHELL", "kafka-topics --list --zookeeper zookeeper:32181"]
-      interval: 5s
-      timeout: 5s
-      retries: 15
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:32181
